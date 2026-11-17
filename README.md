@@ -42,6 +42,9 @@ REA diagrams model **Resources** (things of value), **Events** (what happens to 
 - **Acquisition & Payment:** Purchase requisition → Purchase order → Purchase (increment of raw materials) ⇄ Cash disbursement (decrement of cash).
 - The three cycles integrate through shared resources: *inventory* links Acquisition → Conversion, and *cash* links Payment → Collection.
 
+https://github.com/MADZIVI/Business-Analysis-/blob/main/REA%20for%20Sales%20and%20Collection%20Process%20.png
+
+https://github.com/MADZIVI/Business-Analysis-/blob/main/REA%20for%20Acquisition%20and%20Payment%20Process%20.png
 ---
 
 ## Schema Design (3NF)
