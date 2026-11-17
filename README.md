@@ -8,7 +8,7 @@ A complete relational database design and SQL demonstration for **GreenCrunch Pi
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Business Overview](#-business-overview)
 - [REA Model](#-rea-model)
@@ -22,7 +22,7 @@ A complete relational database design and SQL demonstration for **GreenCrunch Pi
 
 ---
 
-## 🏢 Business Overview
+##  Business Overview
 
 GreenCrunch produces sweet, spicy, garlic, and mixed-vegetable pickles for retail, wholesale, and food-service customers across South Africa.
 
@@ -34,7 +34,7 @@ GreenCrunch produces sweet, spicy, garlic, and mixed-vegetable pickles for retai
 
 ---
 
-## 🧩 REA Model
+##  REA Model
 
 REA diagrams model **Resources** (things of value), **Events** (what happens to them), and **Agents** (who participates), with cardinality pairs `(min,max)` on every relationship.
 
@@ -44,7 +44,7 @@ REA diagrams model **Resources** (things of value), **Events** (what happens to 
 
 ---
 
-## 🗄️ Schema Design (3NF)
+## Schema Design (3NF)
 
 Normalised from a flat UNF order export:
 
@@ -52,7 +52,7 @@ Normalised from a flat UNF order export:
 2. **2NF** — line attributes depend on the whole composite key `(order_id, product_id)`
 3. **3NF** — transitive dependencies removed (`Customer`, `Product`, `Payment` in own tables)
 
-```javascript
+```
 Customer(customer_id PK, customer_name, phone UNIQUE)
 Product(product_id PK, product_name, unit_price CHECK(>0), qty_in_stock CHECK(>=0))
 Sales_Order(order_id PK, order_date, customer_id → Customer)
@@ -61,80 +61,6 @@ Order_Line(order_id, product_id, qty, unit_price, PK(order_id, product_id),
 Payment(payment_id PK, order_id → Sales_Order UNIQUE, pay_date,
         pay_method CHECK IN ('Cash','EFT','Card'), amount CHECK(>0))
 ```
-
----
-
-## Features Demonstrated
-
-| # | Topic | What it shows |
-| --- | --- | --- |
-| 1 | REA diagrams | Sales & Collection, Acquisition & Payment, integrated cycle |
-| 2 | Normalisation | UNF → 1NF → 2NF → 3NF |
-| 3 | Primary / Foreign keys | Composite PK on `Order_Line`; FK constraints with referential integrity |
-| 4 | Constraints | `NOT NULL`, `UNIQUE`, `CHECK`, `FOREIGN KEY` — all verified to reject bad data |
-| 5 | Views | `v_debtors` (unpaid orders), `v_daily_sales` |
-| 6 | Stored procedures | `sp_record_payment` (validates amount against order total), `sp_customer_totals` |
-| 7 | Functions | `fn_order_total(order_id)` returns computed order value |
-| 8 | Triggers | `trg_stock_out` auto-decrements stock on every order line inserted |
-| 9 | Joins | INNER, LEFT (debtors report) |
-| 10 | Subqueries | Nested `IN`, correlated subqueries |
-| 11 | CTEs | `WITH monthly AS (...)`, ranked per-customer spending |
-| 12 | Window functions | `RANK()`, `LAG()`, `SUM() OVER` running totals, revenue share % |
-| 13 | Indexes | `idx_customer_name`, `idx_line_product`, `idx_order_date` |
-| 14 | Query optimisation | `EXPLAIN QUERY PLAN` before/after indexing (SCAN → SEARCH) |
-
----
-
-## 🚀 Getting Started
-
-**Option A — MySQL 8 (full feature set incl. procedures & functions):**
-
-```bash
-mysql -u root -p < greencrunch_demo_mysql.sql
-```
-
-**Option B — SQLite (live demo, no procedures):**
-
-```bash
-sqlite3 greencrunch.db < greencrunch_demo_sqlite.sql
-```
-
----
-
-## 💻 Usage Examples
-
-```sql
--- Top-spending customer per product (CTE + window function)
-WITH per_cust AS (
-  SELECT ol.product_id, so.customer_id,
-         SUM(ol.qty*ol.unit_price) AS spent,
-         RANK() OVER (PARTITION BY ol.product_id ORDER BY SUM(ol.qty*ol.unit_price) DESC) AS rnk
-  FROM Order_Line ol JOIN Sales_Order so ON ol.order_id = so.order_id
-  GROUP BY ol.product_id, so.customer_id)
-SELECT p.product_name, c.customer_name, per_cust.spent
-FROM per_cust JOIN Product p ON per_cust.product_id = p.product_id
-JOIN Customer c ON per_cust.customer_id = c.customer_id
-WHERE rnk = 1;
-
--- Record a payment safely
-CALL sp_record_payment('P005','O005','2025-10-20','EFT',900);
-
--- Order value
-SELECT fn_order_total('O003');   -- 2740.00
-```
-
----
-
-##  Query Optimisation
-
-```javascript
-Before index:  SCAN Customer                                   (full table scan)
-After index:   SEARCH Customer USING INDEX idx_customer_name   (index seek)
-Joins:         SEARCH ol USING INDEX idx_line_product          (FK covering index)
-```
-
-**Rules of thumb:** index foreign keys, `WHERE`/`ORDER BY` columns; always verify with `EXPLAIN`; avoid over-indexing (each index slows writes).
-
 
 
  🔗 Integration Problems Solved
@@ -180,8 +106,5 @@ Business Rules
 - **20 Customers** — Soweto SuperSpar, Boxer Superstore, Braai & Spice House… with SA cell numbers (071/082/073 format), `.co.za` emails, and provincial cities
 - **20 Products** — 20 pickle varieties priced R50–R120, e.g. Peri-Peri Pickle R66, Sampler Gift Pack R120
 - **22 Sales orders** + **~44 order lines** across October 2025, **20 Payments**, **20 Purchase orders** (covering the Acquisition cycle too)
-
-Also included: `v_debtors` and `v_daily_sales` views, the `fn_order_total` function, all indexes, and a final verification query that returns the row count of every table so your lecturer can confirm the 20-record requirement at a glance.
-
 
 <sub>Academic group assignment — Business Analysis 2.2, Computer Science Department, VUT.</sub>
